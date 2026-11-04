@@ -59,7 +59,7 @@
       </div>
 
       <!-- Navigation Links -->
-      <nav class="p-3 space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)]">
+      <nav class="p-3 space-y-1.5 overflow-y-auto max-h-[calc(100vh-140px)]">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 group">
           <i class="fa-solid fa-chart-pie w-5 text-center text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
           <span class="sidebar-text truncate">Overview Dashboard</span>
@@ -104,16 +104,13 @@
       </nav>
     </div>
 
-    <!-- Cloud Sync Status & Local Data Control -->
+    <!-- Storage Actions / Reset & Demo Toggle -->
     <div class="p-3 border-t border-slate-800/80 space-y-2">
-      <div id="sync-status" class="text-xs text-center py-1.5 px-2 rounded-lg bg-slate-800/80 text-slate-400 font-medium border border-slate-700/50">
-        <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Initializing...
-      </div>
-      <button onclick="fetchFromCloud()" class="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition-colors">
-        <i class="fa-solid fa-rotate"></i> <span class="sidebar-text">Sync Data</span>
+      <button onclick="toggleDemoData()" id="btn-toggle-demo" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 rounded-md border border-indigo-800/60 transition-colors">
+        <i class="fa-solid fa-vial"></i> <span class="sidebar-text" id="lbl-toggle-demo">Load Sample Demo Data</span>
       </button>
-      <button onclick="toggleDemoData()" id="btn-toggle-demo" class="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 rounded-md border border-indigo-800/60 transition-colors">
-        <i class="fa-solid fa-vial"></i> <span class="sidebar-text" id="lbl-toggle-demo">Load Sample Demo</span>
+      <button onclick="clearAllData()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-md border border-rose-900/40 transition-colors">
+        <i class="fa-solid fa-trash-can"></i> <span class="sidebar-text">Clear All Data</span>
       </button>
     </div>
   </aside>
@@ -844,11 +841,8 @@
     </div>
   </div>
 
-  <!-- APPLICATION LOGIC & HYBRID GOOGLE SHEETS / LOCALSTORAGE STATE -->
+  <!-- APPLICATION LOGIC & STATE -->
   <script>
-    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-    const API_URL = "https://script.google.com/macros/s/AKfycbwD2bT3YKxTAciXKW0REl07Wo04isfnQfqQiwFO1e0Ww_n3x-Rpujj3Uhqp2Y9bnKHKLQ/exec";
-
     // Sample / Demo Data Sets
     const samplePersonnel = [
       { id: '1', staffId: 'EMP-101', name: 'Alexander Wright', role: 'Operations Lead', dept: 'Operations', type: 'Full-Time', status: 'Active', email: 'a.wright@company.com' },
@@ -877,7 +871,7 @@
       { id: '4', code: 'OPS-205', title: 'Emergency Relay Testing', assignedId: '1', priority: 'High', start: '2026-10-25', due: '2026-10-30', status: 'Completed' }
     ];
 
-    // Master Data Store
+    // Initialize State (Defaults to EMPTY clean state unless existing items in localStorage)
     let personnel = JSON.parse(localStorage.getItem('ops_personnel')) || [];
     let projects = JSON.parse(localStorage.getItem('ops_projects')) || [];
     let leaveRequests = JSON.parse(localStorage.getItem('ops_leave')) || [];
@@ -894,121 +888,36 @@
       leave: true
     };
 
-    // Initialize application & sync cloud
-    window.onload = function() {
-      switchTab('dashboard');
-      updateDemoButtonUI();
-      renderAll();
-      if (API_URL && !API_URL.includes("YOUR_SCRIPT_ID_HERE")) {
-        fetchFromCloud();
-      } else {
-        updateSyncStatus('<i class="fa-solid fa-hard-drive mr-1"></i> Local Storage Mode', 'bg-slate-800 text-slate-400 border-slate-700');
-      }
-    };
-
-    // Google Sheets Cloud API Sync
-    function fetchFromCloud() {
-      if (!API_URL || API_URL.includes("YOUR_SCRIPT_ID_HERE")) return;
-      updateSyncStatus('<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Fetching...', 'bg-indigo-950/60 text-indigo-300 border-indigo-800/60');
-      
-      fetch(`${API_URL}?action=read`)
-        .then(res => res.json())
-        .then(data => {
-          if (data) {
-            personnel = data.personnel || data.Personnel || personnel;
-            projects = data.projects || data.Projects || projects;
-            leaveRequests = data.leaves || data.Leaves || leaveRequests;
-            jobs = data.jobs || data.Jobs || jobs;
-            
-            // Backup locally
-            localStorage.setItem('ops_personnel', JSON.stringify(personnel));
-            localStorage.setItem('ops_projects', JSON.stringify(projects));
-            localStorage.setItem('ops_leave', JSON.stringify(leaveRequests));
-            localStorage.setItem('ops_jobs', JSON.stringify(jobs));
-
-            renderAll();
-            updateSyncStatus('<i class="fa-solid fa-cloud-check mr-1"></i> Cloud Synced', 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60');
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          updateSyncStatus('<i class="fa-solid fa-cloud-xmark mr-1"></i> Sync Offline', 'bg-rose-950/60 text-rose-300 border-rose-800/60');
-        });
-    }
-
-    function syncToCloud() {
-      // Local backup first
+    // Save to LocalStorage
+    function persistData() {
       localStorage.setItem('ops_personnel', JSON.stringify(personnel));
       localStorage.setItem('ops_projects', JSON.stringify(projects));
       localStorage.setItem('ops_leave', JSON.stringify(leaveRequests));
       localStorage.setItem('ops_jobs', JSON.stringify(jobs));
       localStorage.setItem('ops_demo_active', JSON.stringify(isDemoLoaded));
-
-      if (!API_URL || API_URL.includes("YOUR_SCRIPT_ID_HERE")) {
-        updateSyncStatus('<i class="fa-solid fa-hard-drive mr-1"></i> Saved Locally', 'bg-slate-800 text-slate-300 border-slate-700');
-        return;
-      }
-
-      updateSyncStatus('<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Saving to Cloud...', 'bg-amber-950/60 text-amber-300 border-amber-800/60');
-
-      const payload = {
-        action: "writeAll",
-        data: {
-          personnel: personnel,
-          projects: projects,
-          leaves: leaveRequests,
-          jobs: jobs
-        }
-      };
-
-      fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === "success") {
-          updateSyncStatus('<i class="fa-solid fa-cloud-check mr-1"></i> Cloud Synced', 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60');
-        } else {
-          updateSyncStatus('<i class="fa-solid fa-cloud-xmark mr-1"></i> Save Error', 'bg-rose-950/60 text-rose-300 border-rose-800/60');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        updateSyncStatus('<i class="fa-solid fa-cloud-xmark mr-1"></i> Save Error', 'bg-rose-950/60 text-rose-300 border-rose-800/60');
-      });
-    }
-
-    function updateSyncStatus(html, classes) {
-      const el = document.getElementById('sync-status');
-      if (el) {
-        el.innerHTML = html;
-        el.className = `text-xs text-center py-1.5 px-2 rounded-lg font-medium border ${classes}`;
-      }
-    }
-
-    // Save Data & Trigger Sync
-    function persistData() {
       updateDemoButtonUI();
       renderAll();
-      syncToCloud();
     }
 
     function toggleDemoData() {
       if (isDemoLoaded) {
-        personnel = [];
-        projects = [];
-        leaveRequests = [];
-        jobs = [];
-        isDemoLoaded = false;
+        clearAllData();
       } else {
         personnel = [...samplePersonnel];
         projects = [...sampleProjects];
         leaveRequests = [...sampleLeave];
         jobs = [...sampleJobs];
         isDemoLoaded = true;
+        persistData();
       }
+    }
+
+    function clearAllData() {
+      personnel = [];
+      projects = [];
+      leaveRequests = [];
+      jobs = [];
+      isDemoLoaded = false;
       persistData();
     }
 
@@ -1018,10 +927,10 @@
       if (lbl && btn) {
         if (isDemoLoaded) {
           lbl.textContent = 'Remove Demo Data';
-          btn.className = 'w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-amber-300 bg-amber-950/40 hover:bg-amber-900/60 rounded-md border border-amber-800/60 transition-colors';
+          btn.className = 'w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-amber-300 bg-amber-950/40 hover:bg-amber-900/60 rounded-md border border-amber-800/60 transition-colors';
         } else {
-          lbl.textContent = 'Load Sample Demo';
-          btn.className = 'w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 rounded-md border border-indigo-800/60 transition-colors';
+          lbl.textContent = 'Load Sample Demo Data';
+          btn.className = 'w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 rounded-md border border-indigo-800/60 transition-colors';
         }
       }
     }
@@ -1086,7 +995,7 @@
         document.getElementById('proj-progress-val').textContent = '0';
         document.getElementById('modal-project-title').textContent = id ? 'Edit Project Task' : 'Add Project Task';
         if (id) {
-          const item = projects.find(p => String(p.id) === String(id));
+          const item = projects.find(p => p.id === id);
           if (item) {
             document.getElementById('proj-id').value = item.id;
             document.getElementById('proj-code').value = item.code;
@@ -1110,7 +1019,7 @@
         document.getElementById('p-id').value = '';
         document.getElementById('modal-personnel-title').textContent = id ? 'Edit Personnel' : 'Add Personnel';
         if (id) {
-          const item = personnel.find(p => String(p.id) === String(id));
+          const item = personnel.find(p => p.id === id);
           if (item) {
             document.getElementById('p-id').value = item.id;
             document.getElementById('p-staff-id').value = item.staffId;
@@ -1132,7 +1041,7 @@
         document.getElementById('j-id').value = '';
         document.getElementById('modal-job-title').textContent = id ? 'Edit Job' : 'Create Operation Job';
         if (id) {
-          const item = jobs.find(j => String(j.id) === String(id));
+          const item = jobs.find(j => j.id === id);
           if (item) {
             document.getElementById('j-id').value = item.id;
             document.getElementById('j-code').value = item.code;
@@ -1188,7 +1097,7 @@
         remarks: document.getElementById('proj-remarks').value
       };
 
-      const existingIdx = projects.findIndex(p => String(p.id) === String(id));
+      const existingIdx = projects.findIndex(p => p.id === id);
       if (existingIdx >= 0) projects[existingIdx] = newEntry;
       else projects.push(newEntry);
 
@@ -1197,7 +1106,7 @@
     }
 
     function updateProjectQuickProgress(id, progress) {
-      const proj = projects.find(p => String(p.id) === String(id));
+      const proj = projects.find(p => p.id === id);
       if (proj) {
         proj.progress = parseInt(progress);
         if (proj.progress === 100 && proj.status !== 'Completed') {
@@ -1209,7 +1118,7 @@
     }
 
     function updateProjectQuickStatus(id, newStatus) {
-      const proj = projects.find(p => String(p.id) === String(id));
+      const proj = projects.find(p => p.id === id);
       if (proj) {
         proj.status = newStatus;
         if (newStatus === 'Completed') {
@@ -1221,7 +1130,7 @@
     }
 
     function deleteProject(id) {
-      projects = projects.filter(p => String(p.id) !== String(id));
+      projects = projects.filter(p => p.id !== id);
       persistData();
     }
 
@@ -1229,7 +1138,7 @@
       if (projects.length === 0) return;
       let csv = 'Code,Task Name,Category,Assigned Owner,Priority,Start Date,Expected Date,Completed Date,Progress (%),Status,Remarks\n';
       projects.forEach(p => {
-        const staff = personnel.find(s => String(s.id) === String(p.assignedId));
+        const staff = personnel.find(s => s.id === p.assignedId);
         csv += `"${p.code}","${p.title}","${p.category}","${staff ? staff.name : 'Unassigned'}","${p.priority}","${p.start}","${p.expected}","${p.completedDate || ''}","${p.progress}","${p.status}","${p.remarks || ''}"\n`;
       });
       
@@ -1256,7 +1165,7 @@
         email: document.getElementById('p-email').value
       };
 
-      const existingIdx = personnel.findIndex(p => String(p.id) === String(id));
+      const existingIdx = personnel.findIndex(p => p.id === id);
       if (existingIdx >= 0) personnel[existingIdx] = newEntry;
       else personnel.push(newEntry);
 
@@ -1296,7 +1205,7 @@
         status: document.getElementById('j-status').value
       };
 
-      const existingIdx = jobs.findIndex(j => String(j.id) === String(id));
+      const existingIdx = jobs.findIndex(j => j.id === id);
       if (existingIdx >= 0) jobs[existingIdx] = newEntry;
       else jobs.push(newEntry);
 
@@ -1306,16 +1215,16 @@
 
     // Status Modifiers & Deletions
     function deletePersonnel(id) {
-      personnel = personnel.filter(p => String(p.id) !== String(id));
+      personnel = personnel.filter(p => p.id !== id);
       persistData();
     }
 
     function updateLeaveStatus(id, newStatus) {
-      const request = leaveRequests.find(l => String(l.id) === String(id));
+      const request = leaveRequests.find(l => l.id === id);
       if (request) {
         request.status = newStatus;
         if (newStatus === 'Approved') {
-          const staff = personnel.find(p => String(p.id) === String(request.staffId));
+          const staff = personnel.find(p => p.id === request.staffId);
           if (staff) staff.status = 'On Leave';
         }
       }
@@ -1323,12 +1232,12 @@
     }
 
     function deleteJob(id) {
-      jobs = jobs.filter(j => String(j.id) !== String(id));
+      jobs = jobs.filter(j => j.id !== id);
       persistData();
     }
 
     function updateJobStatusQuick(id, newStatus) {
-      const job = jobs.find(j => String(j.id) === String(id));
+      const job = jobs.find(j => j.id === id);
       if (job) job.status = newStatus;
       persistData();
     }
@@ -1360,7 +1269,7 @@
       const categoryFilter = document.getElementById('project-category-filter').value;
 
       const filtered = projects.filter(p => {
-        const matchesSearch = (p.code || '').toLowerCase().includes(search) || (p.title || '').toLowerCase().includes(search) || (p.remarks && p.remarks.toLowerCase().includes(search));
+        const matchesSearch = p.code.toLowerCase().includes(search) || p.title.toLowerCase().includes(search) || (p.remarks && p.remarks.toLowerCase().includes(search));
         const matchesStatus = statusFilter === 'ALL' || p.status === statusFilter;
         const matchesPriority = priorityFilter === 'ALL' || p.priority === priorityFilter;
         const matchesCategory = categoryFilter === 'ALL' || p.category === categoryFilter;
@@ -1373,7 +1282,7 @@
       }
 
       filtered.forEach(p => {
-        const staff = personnel.find(s => String(s.id) === String(p.assignedId));
+        const staff = personnel.find(s => s.id === p.assignedId);
         const isOverdue = p.status !== 'Completed' && p.expected < todayStr;
 
         // Badge styling
@@ -1381,6 +1290,12 @@
                              p.priority === 'High' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
                              p.priority === 'Medium' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' :
                              'bg-slate-500/20 text-slate-400 border-slate-500/30';
+
+        const statusBadge = p.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                            p.status === 'In Progress' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
+                            p.status === 'Under Review' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                            p.status === 'Delayed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                            'bg-slate-500/10 text-slate-400 border-slate-500/20';
 
         tbody.innerHTML += `
           <tr class="hover:bg-slate-900/40 transition-colors">
@@ -1458,7 +1373,7 @@
         dashList.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">No active operational jobs.</div>`;
       } else {
         activeOps.forEach(job => {
-          const staff = personnel.find(p => String(p.id) === String(job.assignedId));
+          const staff = personnel.find(p => p.id === job.assignedId);
           const priorityBadge = job.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : job.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
 
           dashList.innerHTML += `
@@ -1531,12 +1446,12 @@
     }
 
     function getStaffStatusForDate(staffId, dateStr) {
-      const onLeave = leaveRequests.find(l => String(l.staffId) === String(staffId) && l.status === 'Approved' && dateStr >= l.start && dateStr <= l.end);
+      const onLeave = leaveRequests.find(l => l.staffId === staffId && l.status === 'Approved' && dateStr >= l.start && dateStr <= l.end);
       if (onLeave) {
         return { status: 'On Leave', type: 'leave', label: `On Leave (${onLeave.type})`, badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40', detail: onLeave.notes || 'Approved Leave' };
       }
 
-      const activeJob = jobs.find(j => String(j.assignedId) === String(staffId) && j.status === 'In Progress' && dateStr >= j.start && dateStr <= j.due);
+      const activeJob = jobs.find(j => j.assignedId === staffId && j.status === 'In Progress' && dateStr >= j.start && dateStr <= j.due);
       if (activeJob) {
         return { status: 'Outstation', type: 'outstation', label: `Outstation (${activeJob.code})`, badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40', detail: activeJob.title };
       }
@@ -1658,7 +1573,7 @@
       const dept = document.getElementById('personnel-dept-filter').value;
 
       const filtered = personnel.filter(p => {
-        const matchesSearch = (p.name || '').toLowerCase().includes(search) || (p.staffId || '').toLowerCase().includes(search) || (p.role || '').toLowerCase().includes(search);
+        const matchesSearch = p.name.toLowerCase().includes(search) || p.staffId.toLowerCase().includes(search) || p.role.toLowerCase().includes(search);
         const matchesDept = dept === 'ALL' || p.dept === dept;
         return matchesSearch && matchesDept;
       });
@@ -1703,7 +1618,7 @@
       const filtered = leaveRequests.filter(l => filter === 'ALL' || l.status === filter);
 
       filtered.forEach(l => {
-        const staff = personnel.find(p => String(p.id) === String(l.staffId));
+        const staff = personnel.find(p => p.id === l.staffId);
         const statusBadge = l.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : l.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
         tbody.innerHTML += `
@@ -1735,14 +1650,14 @@
       const priorityFilter = document.getElementById('job-priority-filter').value;
 
       const filtered = jobs.filter(j => {
-        const matchesSearch = (j.code || '').toLowerCase().includes(search) || (j.title || '').toLowerCase().includes(search);
+        const matchesSearch = j.code.toLowerCase().includes(search) || j.title.toLowerCase().includes(search);
         const matchesStatus = statusFilter === 'ALL' || j.status === statusFilter;
         const matchesPriority = priorityFilter === 'ALL' || j.priority === priorityFilter;
         return matchesSearch && matchesStatus && matchesPriority;
       });
 
       filtered.forEach(j => {
-        const staff = personnel.find(p => String(p.id) === String(j.assignedId));
+        const staff = personnel.find(p => p.id === j.assignedId);
         const priorityBadge = j.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : j.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
 
         tbody.innerHTML += `
@@ -1781,6 +1696,12 @@
       renderLeave();
       renderJobs();
     }
+
+    // Initialize App
+    window.onload = function() {
+      switchTab('dashboard');
+      renderAll();
+    };
   </script>
 </body>
 </html>
