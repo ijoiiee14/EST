@@ -1,244 +1,1786 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EST Operations Master List</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .sidebar-transition { transition: width 0.3s ease-in-out; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operations Master List Hub</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars & Glassmorphism */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.4); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.8); }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex font-sans">
+<body class="h-full flex overflow-hidden font-sans antialiased text-slate-200 bg-slate-950">
 
-    <!-- Left Sidebar -->
-    <aside id="sidebar" class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between sidebar-transition shrink-0 z-20">
-        <div>
-            <div class="p-4 flex items-center justify-between border-b border-slate-800">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shrink-0">EST</div>
-                    <span class="font-bold text-base tracking-wide text-slate-100 sidebar-label truncate">Operations</span>
-                </div>
-                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
+  <!-- Main Sidebar -->
+  <aside id="main-sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 transition-all duration-300 relative z-30">
+    <div>
+      <!-- App Header & Collapse Toggle -->
+      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800/80">
+        <div class="flex items-center gap-3 overflow-hidden">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
+            <i class="fa-solid font-bold text-white fa-layer-group"></i>
+          </div>
+          <div class="sidebar-text truncate">
+            <h1 class="font-bold text-slate-100 text-sm tracking-wide leading-tight">OPS MASTER</h1>
+            <p class="text-[11px] text-indigo-400 font-medium">Operations Center</p>
+          </div>
+        </div>
+        <button onclick="toggleSidebarCollapse()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Toggle Sidebar">
+          <i id="sidebar-collapse-icon" class="fa-solid fa-angle-left"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="p-3 space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)]">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 group">
+          <i class="fa-solid fa-chart-pie w-5 text-center text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
+          <span class="sidebar-text truncate">Overview Dashboard</span>
+        </button>
+
+        <button onclick="switchTab('project-status')" id="nav-project-status" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 group">
+          <div class="flex items-center gap-3 truncate">
+            <i class="fa-solid fa-diagram-project w-5 text-center text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
+            <span class="sidebar-text truncate">Project Status</span>
+          </div>
+          <span id="badge-active-projects" class="sidebar-text text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded-full font-mono">0</span>
+        </button>
+
+        <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 group">
+          <i class="fa-solid fa-calendar-days w-5 text-center text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
+          <span class="sidebar-text truncate">Calendar Schedule</span>
+        </button>
+
+        <button onclick="switchTab('personnel')" id="nav-personnel" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 group">
+          <i class="fa-solid fa-user-group w-5 text-center text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
+          <span class="sidebar-text truncate">Personnel Roster</span>
+        </button>
+
+        <button onclick="switchTab('leave')" id="nav-leave" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 group">
+          <i class="fa-solid fa-calendar-check w-5 text-center text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
+          <span class="sidebar-text truncate">Leave Tracker</span>
+        </button>
+
+        <button onclick="switchTab('jobs')" id="nav-jobs" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 group">
+          <i class="fa-solid fa-list-check w-5 text-center text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
+          <span class="sidebar-text truncate">Job Operations</span>
+        </button>
+
+        <!-- Placeholder Slot for Future Modules -->
+        <div class="pt-3 border-t border-slate-800/60 sidebar-text">
+          <span class="px-3 text-[10px] uppercase font-semibold text-slate-500 tracking-wider">Future Modules</span>
+          <div class="mt-1 px-3 py-2 border border-dashed border-slate-800 rounded-lg text-slate-600 text-xs flex items-center gap-2">
+            <i class="fa-solid fa-plus-circle text-slate-600"></i>
+            <span>Add Custom Module...</span>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Cloud Sync Status & Local Data Control -->
+    <div class="p-3 border-t border-slate-800/80 space-y-2">
+      <div id="sync-status" class="text-xs text-center py-1.5 px-2 rounded-lg bg-slate-800/80 text-slate-400 font-medium border border-slate-700/50">
+        <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Initializing...
+      </div>
+      <button onclick="fetchFromCloud()" class="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition-colors">
+        <i class="fa-solid fa-rotate"></i> <span class="sidebar-text">Sync Data</span>
+      </button>
+      <button onclick="toggleDemoData()" id="btn-toggle-demo" class="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 rounded-md border border-indigo-800/60 transition-colors">
+        <i class="fa-solid fa-vial"></i> <span class="sidebar-text" id="lbl-toggle-demo">Load Sample Demo</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Content Workspace -->
+  <div class="flex-1 flex flex-col h-full overflow-hidden">
+    
+    <!-- Top Bar -->
+    <header class="h-16 bg-slate-900/70 border-b border-slate-800/80 flex items-center justify-between px-6 shrink-0 backdrop-blur-md">
+      <div class="flex items-center gap-4">
+        <!-- Mobile Drawer Toggle -->
+        <button onclick="toggleMobileNav()" class="md:hidden text-slate-400 hover:text-white p-2">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        <h2 id="page-title" class="text-lg font-semibold text-white tracking-tight">Overview Dashboard</h2>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-3">
+        <button onclick="openModal('project')" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+          <i class="fa-solid fa-folder-plus"></i> New Project Task
+        </button>
+        <button onclick="openModal('personnel')" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all shadow-sm">
+          <i class="fa-solid fa-user-plus"></i> Staff
+        </button>
+        <button onclick="openModal('leave')" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-600/20 text-amber-300 border border-amber-500/30 hover:bg-amber-600 hover:text-white transition-all shadow-sm">
+          <i class="fa-solid fa-calendar-plus"></i> Leave
+        </button>
+        <button onclick="openModal('job')" class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+          <i class="fa-solid fa-square-plus"></i> Job
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Navigation Menu Dropdown -->
+    <div id="mobile-menu" class="hidden bg-slate-900 border-b border-slate-800 p-4 md:hidden space-y-2">
+      <button onclick="switchTab('dashboard'); toggleMobileNav();" class="w-full text-left px-3 py-2 rounded text-slate-300 hover:bg-slate-800">Overview Dashboard</button>
+      <button onclick="switchTab('project-status'); toggleMobileNav();" class="w-full text-left px-3 py-2 rounded text-slate-300 hover:bg-slate-800">Project Status</button>
+      <button onclick="switchTab('calendar'); toggleMobileNav();" class="w-full text-left px-3 py-2 rounded text-slate-300 hover:bg-slate-800">Calendar Schedule</button>
+      <button onclick="switchTab('personnel'); toggleMobileNav();" class="w-full text-left px-3 py-2 rounded text-slate-300 hover:bg-slate-800">Personnel Roster</button>
+      <button onclick="switchTab('leave'); toggleMobileNav();" class="w-full text-left px-3 py-2 rounded text-slate-300 hover:bg-slate-800">Leave Tracker</button>
+      <button onclick="switchTab('jobs'); toggleMobileNav();" class="w-full text-left px-3 py-2 rounded text-slate-300 hover:bg-slate-800">Job Operations</button>
+    </div>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+
+      <!-- ================= DASHBOARD TAB ================= -->
+      <section id="tab-dashboard" class="tab-content space-y-6">
+        <!-- High Level Stats Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">Total Personnel</p>
+              <h3 id="stat-total-staff" class="text-2xl font-bold text-white mt-1">0</h3>
+              <p class="text-xs text-emerald-400 mt-1"><i class="fa-solid fa-circle text-[8px] mr-1"></i><span id="stat-active-staff">0</span> Active Duty</p>
             </div>
+            <div class="w-12 h-12 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <i class="fa-solid fa-users text-xl"></i>
+            </div>
+          </div>
 
-            <nav class="p-3 space-y-1">
-                <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition font-medium text-sm active bg-indigo-600/20 text-indigo-400" data-tab="dashboard">
-                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
-                    <span class="sidebar-label truncate">Dashboard</span>
-                </button>
-                <button onclick="switchTab('projects')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition font-medium text-sm" data-tab="projects">
-                    <i class="fa-solid fa-list-check w-5 text-center"></i>
-                    <span class="sidebar-label truncate">Project Status</span>
-                </button>
-                <button onclick="switchTab('calendar')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition font-medium text-sm" data-tab="calendar">
-                    <i class="fa-solid fa-calendar-days w-5 text-center"></i>
-                    <span class="sidebar-label truncate">Calendar</span>
-                </button>
-                <button onclick="switchTab('personnel')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition font-medium text-sm" data-tab="personnel">
-                    <i class="fa-solid fa-users w-5 text-center"></i>
-                    <span class="sidebar-label truncate">Personnel</span>
-                </button>
-                <button onclick="switchTab('leave')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition font-medium text-sm" data-tab="leave">
-                    <i class="fa-solid fa-user-clock w-5 text-center"></i>
-                    <span class="sidebar-label truncate">Leave Tracker</span>
-                </button>
-                <button onclick="switchTab('jobs')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition font-medium text-sm" data-tab="jobs">
-                    <i class="fa-solid fa-briefcase w-5 text-center"></i>
-                    <span class="sidebar-label truncate">Job Operations</span>
-                </button>
-            </nav>
+          <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">On Leave Today</p>
+              <h3 id="stat-on-leave" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+              <p class="text-xs text-amber-300/80 mt-1"><span id="stat-pending-leave">0</span> Pending approvals</p>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <i class="fa-solid fa-user-clock text-xl"></i>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">Active Operations</p>
+              <h3 id="stat-active-jobs" class="text-2xl font-bold text-white mt-1">0</h3>
+              <p class="text-xs text-indigo-400 mt-1"><span id="stat-in-progress-jobs">0</span> In Progress</p>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <i class="fa-solid fa-sliders text-xl"></i>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">Job Completion Rate</p>
+              <h3 id="stat-completion-rate" class="text-2xl font-bold text-emerald-400 mt-1">0%</h3>
+              <p class="text-xs text-rose-400 mt-1"><span id="stat-high-priority">0</span> High Priority Pending</p>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <i class="fa-solid fa-chart-line text-xl"></i>
+            </div>
+          </div>
         </div>
 
-        <div class="p-3 border-t border-slate-800 space-y-2">
-            <div id="sync-status" class="text-xs text-center py-1 px-2 rounded-lg bg-slate-800 text-slate-400 font-medium">
-                <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Syncing...
+        <!-- Dashboard Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Recent Activity & High Priority Jobs -->
+          <div class="lg:col-span-2 glass-panel rounded-xl p-5 border border-slate-800">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-slate-200 text-sm tracking-wide">Critical & Active Operations</h3>
+              <button onclick="switchTab('jobs')" class="text-xs text-indigo-400 hover:text-indigo-300">View All Ops &rarr;</button>
             </div>
-            <button onclick="fetchFromCloud()" class="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
-                <i class="fa-solid fa-rotate"></i>
-                <span class="sidebar-label">Force Refresh Data</span>
+            <div id="dash-active-jobs-list" class="space-y-3">
+              <!-- Dynamically Populated -->
+            </div>
+          </div>
+
+          <!-- Quick Department Overview -->
+          <div class="glass-panel rounded-xl p-5 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <h3 class="font-semibold text-slate-200 text-sm tracking-wide mb-4">Department Load Distribution</h3>
+              <div id="dash-dept-distribution" class="space-y-3">
+                <!-- Dynamically Populated -->
+              </div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-slate-800/80">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>Total Workload Capacity</span>
+                <span class="text-indigo-400 font-semibold">Optimal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PROJECT STATUS TAB ================= -->
+      <section id="tab-project-status" class="tab-content space-y-6 hidden">
+        <!-- Stat Summary Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">Total Tasks</p>
+              <h3 id="stat-proj-total" class="text-2xl font-bold text-white mt-1">0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <i class="fa-solid fa-list-check"></i>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">In Progress</p>
+              <h3 id="stat-proj-inprogress" class="text-2xl font-bold text-sky-400 mt-1">0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+              <i class="fa-solid fa-spinner"></i>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">Completed</p>
+              <h3 id="stat-proj-completed" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">Delayed / Overdue</p>
+              <h3 id="stat-proj-delayed" class="text-2xl font-bold text-rose-400 mt-1">0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase font-medium text-slate-400 tracking-wider">Pending Review</p>
+              <h3 id="stat-proj-review" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Actions Bar -->
+        <div class="glass-panel p-4 rounded-xl flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <!-- Search input -->
+            <div class="relative flex-1 sm:w-60">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+              <input type="text" id="project-search" oninput="renderProjects()" placeholder="Search project task..." class="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <!-- Status filter -->
+            <select id="project-status-filter" onchange="renderProjects()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none">
+              <option value="ALL">All Statuses</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Completed">Completed</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+
+            <!-- Priority filter -->
+            <select id="project-priority-filter" onchange="renderProjects()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none">
+              <option value="ALL">All Priorities</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+
+            <!-- Category filter -->
+            <select id="project-category-filter" onchange="renderProjects()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none">
+              <option value="ALL">All Categories</option>
+              <option value="Infrastructure">Infrastructure</option>
+              <option value="Software/Systems">Software/Systems</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Procurement">Procurement</option>
+              <option value="Compliance">Compliance</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-3 w-full lg:w-auto justify-end">
+            <button onclick="exportProjectsToCSV()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors flex items-center gap-2">
+              <i class="fa-solid fa-file-csv"></i> Export CSV
             </button>
+            <button onclick="openModal('project')" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> Add Project Task
+            </button>
+          </div>
         </div>
-    </aside>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 p-6 overflow-y-auto">
-        
-        <!-- Dashboard Tab -->
-        <div id="tab-dashboard" class="tab-content active space-y-6">
-            <h2 class="text-2xl font-bold text-white">Operations Overview</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">Total Personnel</p>
-                    <p id="dash-personnel-count" class="text-3xl font-extrabold text-white mt-1">0</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">Active Projects</p>
-                    <p id="dash-projects-count" class="text-3xl font-extrabold text-indigo-400 mt-1">0</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">On Leave Today</p>
-                    <p id="dash-leave-count" class="text-3xl font-extrabold text-amber-400 mt-1">0</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-slate-400 text-xs font-semibold uppercase">Active Jobs</p>
-                    <p id="dash-jobs-count" class="text-3xl font-extrabold text-emerald-400 mt-1">0</p>
-                </div>
+        <!-- Master Project Status Table -->
+        <div class="glass-panel rounded-xl overflow-hidden border border-slate-800">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4 font-semibold">Code & Task Name</th>
+                  <th class="py-3.5 px-4 font-semibold">Category</th>
+                  <th class="py-3.5 px-4 font-semibold">Assigned Owner</th>
+                  <th class="py-3.5 px-4 font-semibold">Priority</th>
+                  <th class="py-3.5 px-4 font-semibold">Timeline & Completion</th>
+                  <th class="py-3.5 px-4 font-semibold w-36">Progress (%)</th>
+                  <th class="py-3.5 px-4 font-semibold">Status</th>
+                  <th class="py-3.5 px-4 font-semibold">Remarks</th>
+                  <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="project-table-body" class="divide-y divide-slate-800/60">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CALENDAR SCHEDULE TAB ================= -->
+      <section id="tab-calendar" class="tab-content space-y-4 hidden">
+        <!-- Calendar Controls & Legend / Filter Bar -->
+        <div class="glass-panel p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full md:w-auto justify-between sm:justify-start">
+            <div class="flex items-center gap-1 bg-slate-900 border border-slate-700/60 rounded-lg p-1">
+              <button onclick="navigateMonth(-1)" class="px-2.5 py-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"><i class="fa-solid fa-chevron-left"></i></button>
+              <button onclick="resetCalendarToToday()" class="px-3 py-1 text-xs font-semibold text-indigo-300 hover:bg-indigo-600/20 rounded">Today</button>
+              <button onclick="navigateMonth(1)" class="px-2.5 py-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
-        </div>
+            <h3 id="calendar-month-label" class="text-base font-bold text-slate-100 min-w-[160px] text-center sm:text-left">Month Year</h3>
+          </div>
 
-        <!-- Personnel Tab -->
-        <div id="tab-personnel" class="tab-content space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-white">Personnel Directory</h2>
-                <button onclick="openPersonnelModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white font-semibold text-sm transition">
-                    + Add Personnel
-                </button>
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between sm:justify-end">
+            <!-- Filter by Dept -->
+            <select id="calendar-dept-filter" onchange="renderCalendar()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Departments</option>
+              <option value="Operations">Operations</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Logistics">Logistics</option>
+              <option value="Quality Assurance">Quality Assurance</option>
+            </select>
+
+            <!-- Status Toggle Buttons -->
+            <div class="flex items-center gap-1.5 bg-slate-900/60 border border-slate-800 p-1 rounded-lg select-none">
+              <button id="toggle-office" onclick="toggleCalendarStatus('office')" class="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md transition-all font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> At Office
+              </button>
+              <button id="toggle-outstation" onclick="toggleCalendarStatus('outstation')" class="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md transition-all font-medium bg-sky-500/20 text-sky-300 border border-sky-500/40">
+                <span class="w-2 h-2 rounded-full bg-sky-500"></span> Outstation
+              </button>
+              <button id="toggle-leave" onclick="toggleCalendarStatus('leave')" class="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md transition-all font-medium bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span> On Leave
+              </button>
             </div>
-            <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-950 text-slate-400 uppercase text-xs font-semibold border-b border-slate-700">
-                        <tr>
-                            <th class="p-4">Name</th>
-                            <th class="p-4">Role</th>
-                            <th class="p-4">Department</th>
-                            <th class="p-4">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="personnel-table-body">
-                        <!-- Dynamic Rows -->
-                    </tbody>
-                </table>
+          </div>
+        </div>
+
+        <!-- Monthly Calendar Grid -->
+        <div class="glass-panel rounded-xl p-4 border border-slate-800">
+          <div class="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+          </div>
+          <div id="calendar-grid" class="grid grid-cols-7 gap-2">
+            <!-- Dynamically Rendered Days -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PERSONNEL MANAGEMENT TAB ================= -->
+      <section id="tab-personnel" class="tab-content space-y-4 hidden">
+        <!-- Control Bar -->
+        <div class="glass-panel p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="relative w-full sm:w-64">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+              <input type="text" id="personnel-search" oninput="renderPersonnel()" placeholder="Search staff name or ID..." class="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
             </div>
+            <select id="personnel-dept-filter" onchange="renderPersonnel()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Departments</option>
+              <option value="Operations">Operations</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Logistics">Logistics</option>
+              <option value="Quality Assurance">Quality Assurance</option>
+            </select>
+          </div>
+          <button onclick="openModal('personnel')" class="w-full sm:w-auto px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+            <i class="fa-solid fa-plus"></i> Add New Staff
+          </button>
         </div>
 
-        <!-- Project Status Tab -->
-        <div id="tab-projects" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white">Project Status Tracking</h2>
-            <p class="text-slate-400 text-sm">Real-time status of active projects, deliverables, and targets.</p>
+        <!-- Roster Table -->
+        <div class="glass-panel rounded-xl overflow-hidden border border-slate-800">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4 font-semibold">Staff Details</th>
+                  <th class="py-3.5 px-4 font-semibold">Role & Dept</th>
+                  <th class="py-3.5 px-4 font-semibold">Employment</th>
+                  <th class="py-3.5 px-4 font-semibold">Status</th>
+                  <th class="py-3.5 px-4 font-semibold">Contact Info</th>
+                  <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="personnel-table-body" class="divide-y divide-slate-800/60">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= LEAVE MANAGEMENT TAB ================= -->
+      <section id="tab-leave" class="tab-content space-y-4 hidden">
+        <!-- Control Bar -->
+        <div class="glass-panel p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <select id="leave-status-filter" onchange="renderLeave()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Statuses</option>
+              <option value="Pending">Pending Approvals</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <button onclick="openModal('leave')" class="w-full sm:w-auto px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+            <i class="fa-solid fa-calendar-plus"></i> Submit Leave Request
+          </button>
         </div>
 
-        <!-- Calendar Tab -->
-        <div id="tab-calendar" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white">Schedule Calendar</h2>
-            <p class="text-slate-400 text-sm">Visual schedule of leave and outstation assignments.</p>
+        <!-- Leave Requests Table -->
+        <div class="glass-panel rounded-xl overflow-hidden border border-slate-800">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4 font-semibold">Staff Member</th>
+                  <th class="py-3.5 px-4 font-semibold">Type</th>
+                  <th class="py-3.5 px-4 font-semibold">Duration</th>
+                  <th class="py-3.5 px-4 font-semibold">Total Days</th>
+                  <th class="py-3.5 px-4 font-semibold">Status</th>
+                  <th class="py-3.5 px-4 font-semibold">Notes</th>
+                  <th class="py-3.5 px-4 font-semibold text-right">Approval Actions</th>
+                </tr>
+              </thead>
+              <tbody id="leave-table-body" class="divide-y divide-slate-800/60">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= JOB OPERATIONS TAB ================= -->
+      <section id="tab-jobs" class="tab-content space-y-4 hidden">
+        <!-- Control & Filter Bar -->
+        <div class="glass-panel p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div class="relative flex-1 sm:w-56">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+              <input type="text" id="job-search" oninput="renderJobs()" placeholder="Search jobs or codes..." class="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            </div>
+            <select id="job-status-filter" onchange="renderJobs()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none">
+              <option value="ALL">All Operations Status</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Pending Review">Pending Review</option>
+              <option value="Completed">Completed</option>
+            </select>
+            <select id="job-priority-filter" onchange="renderJobs()" class="bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none">
+              <option value="ALL">All Priorities</option>
+              <option value="High">High Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="Low">Low Priority</option>
+            </select>
+          </div>
+          <button onclick="openModal('job')" class="w-full md:w-auto px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+            <i class="fa-solid fa-plus"></i> Create New Job
+          </button>
         </div>
 
-        <!-- Leave Tracker Tab -->
-        <div id="tab-leave" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white">Leave Tracker</h2>
-            <p class="text-slate-400 text-sm">Manage personnel leave applications and history.</p>
+        <!-- Master Job List Table -->
+        <div class="glass-panel rounded-xl overflow-hidden border border-slate-800">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
+                <tr>
+                  <th class="py-3.5 px-4 font-semibold">Job ID & Description</th>
+                  <th class="py-3.5 px-4 font-semibold">Assigned Personnel</th>
+                  <th class="py-3.5 px-4 font-semibold">Priority</th>
+                  <th class="py-3.5 px-4 font-semibold">Timeline</th>
+                  <th class="py-3.5 px-4 font-semibold">Status</th>
+                  <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-table-body" class="divide-y divide-slate-800/60">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        <!-- Job Operations Tab -->
-        <div id="tab-jobs" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white">Job Operations</h2>
-            <p class="text-slate-400 text-sm">Track field work, job dispatches, and operational tasks.</p>
-        </div>
+      </section>
 
     </main>
+  </div>
 
-    <script>
-        // REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
-        const API_URL = "https://script.google.com/macros/s/AKfycbwD2bT3YKxTAciXKW0REl07Wo04isfnQfqQiwFO1e0Ww_n3x-Rpujj3Uhqp2Y9bnKHKLQ/exec";
+  <!-- ================= MODALS CONTAINER ================= -->
 
-        let db = {
-            personnel: [],
-            leaves: [],
-            jobs: [],
-            projects: []
-        };
+  <!-- Project Task Modal -->
+  <div id="modal-project" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="glass-panel border border-slate-700 w-full max-w-xl rounded-xl overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/50">
+        <h3 id="modal-project-title" class="font-semibold text-slate-100 text-sm">Add Project Task</h3>
+        <button onclick="closeModal('project')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-project" onsubmit="saveProject(event)" class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="proj-id">
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Task Code</label>
+            <input type="text" id="proj-code" required placeholder="PRJ-101" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-slate-400 mb-1">Task / Item Name</label>
+            <input type="text" id="proj-title" required placeholder="Network Backbone Upgrade" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Category</label>
+            <select id="proj-category" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Infrastructure">Infrastructure</option>
+              <option value="Software/Systems">Software/Systems</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Procurement">Procurement</option>
+              <option value="Compliance">Compliance</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Assigned Personnel</label>
+            <select id="proj-assigned" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100"></select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Priority</label>
+            <select id="proj-priority" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Start Date</label>
+            <input type="date" id="proj-start" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Expected Completion</label>
+            <input type="date" id="proj-expected" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Actual Completed Date</label>
+            <input type="date" id="proj-completed-date" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Status</label>
+            <select id="proj-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Completed">Completed</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Progress (<span id="proj-progress-val">0</span>%)</label>
+            <input type="range" id="proj-progress" min="0" max="100" value="0" oninput="document.getElementById('proj-progress-val').textContent=this.value" class="w-full mt-2 accent-indigo-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Remarks / Operational Notes</label>
+          <textarea id="proj-remarks" rows="2" placeholder="Dependencies, procurement updates, remarks..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100"></textarea>
+        </div>
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('project')" class="px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium">Save Project Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        // Initialize application and load data from Google Sheets
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchFromCloud();
+  <!-- Day Attendance Breakdown Modal -->
+  <div id="modal-day-detail" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="glass-panel border border-slate-700 w-full max-w-xl rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/50">
+        <div>
+          <h3 id="day-detail-title" class="font-semibold text-slate-100 text-sm">Attendance Breakdown</h3>
+          <p id="day-detail-subtitle" class="text-[11px] text-slate-400">Detailed personnel location for date</p>
+        </div>
+        <button onclick="closeModal('day-detail')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-3 flex-1" id="day-detail-list">
+        <!-- Dynamically Populated Personnel List -->
+      </div>
+
+      <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
+        <span class="text-xs text-slate-400">Need to record leave or change assignment?</span>
+        <div class="flex gap-2">
+          <button onclick="closeModal('day-detail'); openModal('leave')" class="px-3 py-1.5 bg-amber-600/20 text-amber-300 border border-amber-500/30 hover:bg-amber-600 hover:text-white rounded text-xs transition-colors">+ Apply Leave</button>
+          <button onclick="closeModal('day-detail'); openModal('job')" class="px-3 py-1.5 bg-sky-600/20 text-sky-300 border border-sky-500/30 hover:bg-sky-600 hover:text-white rounded text-xs transition-colors">+ Assign Job</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Personnel Modal -->
+  <div id="modal-personnel" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="glass-panel border border-slate-700 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/50">
+        <h3 id="modal-personnel-title" class="font-semibold text-slate-100 text-sm">Add Personnel</h3>
+        <button onclick="closeModal('personnel')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-personnel" onsubmit="savePersonnel(event)" class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="p-id">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Staff ID</label>
+            <input type="text" id="p-staff-id" required placeholder="EMP-100" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Full Name</label>
+            <input type="text" id="p-name" required placeholder="John Doe" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Role / Designation</label>
+            <input type="text" id="p-role" required placeholder="Ops Technician" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Department</label>
+            <select id="p-dept" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Operations">Operations</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Logistics">Logistics</option>
+              <option value="Quality Assurance">Quality Assurance</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Employment Type</label>
+            <select id="p-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Full-Time">Full-Time</option>
+              <option value="Contract">Contract</option>
+              <option value="Part-Time">Part-Time</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Operational Status</label>
+            <select id="p-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Active">Active Duty</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Off Duty">Off Duty</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Contact Email</label>
+          <input type="email" id="p-email" required placeholder="john@company.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+        </div>
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('personnel')" class="px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium">Save Details</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leave Modal -->
+  <div id="modal-leave" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="glass-panel border border-slate-700 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/50">
+        <h3 class="font-semibold text-slate-100 text-sm">Submit Leave Request</h3>
+        <button onclick="closeModal('leave')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-leave" onsubmit="saveLeave(event)" class="p-5 space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Staff Member</label>
+          <select id="l-staff-id" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Leave Type</label>
+            <select id="l-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Annual">Annual Leave</option>
+              <option value="Sick">Sick Leave</option>
+              <option value="Emergency">Emergency Leave</option>
+              <option value="Unpaid">Unpaid Leave</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Total Days</label>
+            <input type="number" id="l-days" min="1" max="30" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Start Date</label>
+            <input type="date" id="l-start" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">End Date</label>
+            <input type="date" id="l-end" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Notes / Reason</label>
+          <textarea id="l-notes" rows="2" placeholder="Brief reason..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100"></textarea>
+        </div>
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('leave')" class="px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Job Modal -->
+  <div id="modal-job" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="glass-panel border border-slate-700 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/50">
+        <h3 id="modal-job-title" class="font-semibold text-slate-100 text-sm">Create Operation Job</h3>
+        <button onclick="closeModal('job')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-job" onsubmit="saveJob(event)" class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="j-id">
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Job Code</label>
+            <input type="text" id="j-code" required placeholder="JOB-909" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-slate-400 mb-1">Job Title / Description</label>
+            <input type="text" id="j-title" required placeholder="Maintenance Audit" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Assigned Personnel</label>
+            <select id="j-assigned" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100"></select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Priority</label>
+            <select id="j-priority" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Start Date</label>
+            <input type="date" id="j-start" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Due Date</label>
+            <input type="date" id="j-due" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Operational Status</label>
+          <select id="j-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100">
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Pending Review">Pending Review</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('job')" class="px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium">Save Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC & HYBRID GOOGLE SHEETS / LOCALSTORAGE STATE -->
+  <script>
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
+    const API_URL = "https://script.google.com/macros/s/AKfycbwD2bT3YKxTAciXKW0REl07Wo04isfnQfqQiwFO1e0Ww_n3x-Rpujj3Uhqp2Y9bnKHKLQ/exec";
+
+    // Sample / Demo Data Sets
+    const samplePersonnel = [
+      { id: '1', staffId: 'EMP-101', name: 'Alexander Wright', role: 'Operations Lead', dept: 'Operations', type: 'Full-Time', status: 'Active', email: 'a.wright@company.com' },
+      { id: '2', staffId: 'EMP-102', name: 'Elena Rostova', role: 'Senior Systems Engineer', dept: 'Engineering', type: 'Full-Time', status: 'Active', email: 'e.rostova@company.com' },
+      { id: '3', staffId: 'EMP-103', name: 'Marcus Chen', role: 'Logistics Controller', dept: 'Logistics', type: 'Contract', status: 'On Leave', email: 'm.chen@company.com' },
+      { id: '4', staffId: 'EMP-104', name: 'Sarah Jenkins', role: 'QA Supervisor', dept: 'Quality Assurance', type: 'Full-Time', status: 'Active', email: 's.jenkins@company.com' },
+      { id: '5', staffId: 'EMP-105', name: 'David Kim', role: 'Field Technician', dept: 'Operations', type: 'Part-Time', status: 'Off Duty', email: 'd.kim@company.com' }
+    ];
+
+    const sampleProjects = [
+      { id: '1', code: 'PRJ-101', title: 'Data Center Power Redundancy Upgrade', category: 'Infrastructure', assignedId: '2', priority: 'Critical', start: '2026-10-15', expected: '2026-11-10', completedDate: '', progress: 65, status: 'In Progress', remarks: 'Awaiting secondary transformer delivery' },
+      { id: '2', code: 'PRJ-102', title: 'ISO Quality Audit Compliance Documentation', category: 'Compliance', assignedId: '4', priority: 'High', start: '2026-10-01', expected: '2026-10-30', completedDate: '2026-10-29', progress: 100, status: 'Completed', remarks: 'Passed preliminary external audit' },
+      { id: '3', code: 'PRJ-103', title: 'Fleet Tracking GPS Module Integration', category: 'Software/Systems', assignedId: '3', priority: 'Medium', start: '2026-10-20', expected: '2026-11-02', completedDate: '', progress: 40, status: 'Delayed', remarks: 'Hardware shipment delayed at customs' },
+      { id: '4', code: 'PRJ-104', title: 'HVAC Air Handler Annual Servicing', category: 'Maintenance', assignedId: '1', priority: 'Low', start: '2026-11-05', expected: '2026-11-20', completedDate: '', progress: 0, status: 'Not Started', remarks: 'Scheduled for next maintenance window' }
+    ];
+
+    const sampleLeave = [
+      { id: '1', staffId: '3', type: 'Annual', start: '2026-11-02', end: '2026-11-06', days: 5, status: 'Approved', notes: 'Scheduled annual leave' },
+      { id: '2', staffId: '5', type: 'Sick', start: '2026-11-03', end: '2026-11-04', days: 2, status: 'Pending', notes: 'Medical appointment' }
+    ];
+
+    const sampleJobs = [
+      { id: '1', code: 'OPS-204', title: 'Main Generator Calibration', assignedId: '2', priority: 'High', start: '2026-11-01', due: '2026-11-05', status: 'In Progress' },
+      { id: '2', code: 'LOG-110', title: 'Q4 Inventory Dispatch Audit', assignedId: '3', priority: 'Medium', start: '2026-10-28', due: '2026-11-04', status: 'Pending Review' },
+      { id: '3', code: 'QA-802', title: 'Safety Protocol Certification', assignedId: '4', priority: 'Low', start: '2026-11-03', due: '2026-11-10', status: 'Not Started' },
+      { id: '4', code: 'OPS-205', title: 'Emergency Relay Testing', assignedId: '1', priority: 'High', start: '2026-10-25', due: '2026-10-30', status: 'Completed' }
+    ];
+
+    // Master Data Store
+    let personnel = JSON.parse(localStorage.getItem('ops_personnel')) || [];
+    let projects = JSON.parse(localStorage.getItem('ops_projects')) || [];
+    let leaveRequests = JSON.parse(localStorage.getItem('ops_leave')) || [];
+    let jobs = JSON.parse(localStorage.getItem('ops_jobs')) || [];
+    let isDemoLoaded = JSON.parse(localStorage.getItem('ops_demo_active')) || false;
+
+    let isSidebarCollapsed = false;
+
+    // Current Calendar Navigation & Status Visibility Filters
+    let currentCalDate = new Date();
+    const calendarStatusFilters = {
+      office: true,
+      outstation: true,
+      leave: true
+    };
+
+    // Initialize application & sync cloud
+    window.onload = function() {
+      switchTab('dashboard');
+      updateDemoButtonUI();
+      renderAll();
+      if (API_URL && !API_URL.includes("YOUR_SCRIPT_ID_HERE")) {
+        fetchFromCloud();
+      } else {
+        updateSyncStatus('<i class="fa-solid fa-hard-drive mr-1"></i> Local Storage Mode', 'bg-slate-800 text-slate-400 border-slate-700');
+      }
+    };
+
+    // Google Sheets Cloud API Sync
+    function fetchFromCloud() {
+      if (!API_URL || API_URL.includes("YOUR_SCRIPT_ID_HERE")) return;
+      updateSyncStatus('<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Fetching...', 'bg-indigo-950/60 text-indigo-300 border-indigo-800/60');
+      
+      fetch(`${API_URL}?action=read`)
+        .then(res => res.json())
+        .then(data => {
+          if (data) {
+            personnel = data.personnel || data.Personnel || personnel;
+            projects = data.projects || data.Projects || projects;
+            leaveRequests = data.leaves || data.Leaves || leaveRequests;
+            jobs = data.jobs || data.Jobs || jobs;
+            
+            // Backup locally
+            localStorage.setItem('ops_personnel', JSON.stringify(personnel));
+            localStorage.setItem('ops_projects', JSON.stringify(projects));
+            localStorage.setItem('ops_leave', JSON.stringify(leaveRequests));
+            localStorage.setItem('ops_jobs', JSON.stringify(jobs));
+
+            renderAll();
+            updateSyncStatus('<i class="fa-solid fa-cloud-check mr-1"></i> Cloud Synced', 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          updateSyncStatus('<i class="fa-solid fa-cloud-xmark mr-1"></i> Sync Offline', 'bg-rose-950/60 text-rose-300 border-rose-800/60');
+        });
+    }
+
+    function syncToCloud() {
+      // Local backup first
+      localStorage.setItem('ops_personnel', JSON.stringify(personnel));
+      localStorage.setItem('ops_projects', JSON.stringify(projects));
+      localStorage.setItem('ops_leave', JSON.stringify(leaveRequests));
+      localStorage.setItem('ops_jobs', JSON.stringify(jobs));
+      localStorage.setItem('ops_demo_active', JSON.stringify(isDemoLoaded));
+
+      if (!API_URL || API_URL.includes("YOUR_SCRIPT_ID_HERE")) {
+        updateSyncStatus('<i class="fa-solid fa-hard-drive mr-1"></i> Saved Locally', 'bg-slate-800 text-slate-300 border-slate-700');
+        return;
+      }
+
+      updateSyncStatus('<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Saving to Cloud...', 'bg-amber-950/60 text-amber-300 border-amber-800/60');
+
+      const payload = {
+        action: "writeAll",
+        data: {
+          personnel: personnel,
+          projects: projects,
+          leaves: leaveRequests,
+          jobs: jobs
+        }
+      };
+
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === "success") {
+          updateSyncStatus('<i class="fa-solid fa-cloud-check mr-1"></i> Cloud Synced', 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60');
+        } else {
+          updateSyncStatus('<i class="fa-solid fa-cloud-xmark mr-1"></i> Save Error', 'bg-rose-950/60 text-rose-300 border-rose-800/60');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        updateSyncStatus('<i class="fa-solid fa-cloud-xmark mr-1"></i> Save Error', 'bg-rose-950/60 text-rose-300 border-rose-800/60');
+      });
+    }
+
+    function updateSyncStatus(html, classes) {
+      const el = document.getElementById('sync-status');
+      if (el) {
+        el.innerHTML = html;
+        el.className = `text-xs text-center py-1.5 px-2 rounded-lg font-medium border ${classes}`;
+      }
+    }
+
+    // Save Data & Trigger Sync
+    function persistData() {
+      updateDemoButtonUI();
+      renderAll();
+      syncToCloud();
+    }
+
+    function toggleDemoData() {
+      if (isDemoLoaded) {
+        personnel = [];
+        projects = [];
+        leaveRequests = [];
+        jobs = [];
+        isDemoLoaded = false;
+      } else {
+        personnel = [...samplePersonnel];
+        projects = [...sampleProjects];
+        leaveRequests = [...sampleLeave];
+        jobs = [...sampleJobs];
+        isDemoLoaded = true;
+      }
+      persistData();
+    }
+
+    function updateDemoButtonUI() {
+      const lbl = document.getElementById('lbl-toggle-demo');
+      const btn = document.getElementById('btn-toggle-demo');
+      if (lbl && btn) {
+        if (isDemoLoaded) {
+          lbl.textContent = 'Remove Demo Data';
+          btn.className = 'w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-amber-300 bg-amber-950/40 hover:bg-amber-900/60 rounded-md border border-amber-800/60 transition-colors';
+        } else {
+          lbl.textContent = 'Load Sample Demo';
+          btn.className = 'w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 rounded-md border border-indigo-800/60 transition-colors';
+        }
+      }
+    }
+
+    // Sidebar Collapse
+    function toggleSidebarCollapse() {
+      const sidebar = document.getElementById('main-sidebar');
+      const icon = document.getElementById('sidebar-collapse-icon');
+      isSidebarCollapsed = !isSidebarCollapsed;
+
+      if (isSidebarCollapsed) {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-16');
+        document.querySelectorAll('.sidebar-text').forEach(el => el.classList.add('hidden'));
+        icon.className = 'fa-solid fa-angle-right';
+      } else {
+        sidebar.classList.remove('w-16');
+        sidebar.classList.add('w-64');
+        document.querySelectorAll('.sidebar-text').forEach(el => el.classList.remove('hidden'));
+        icon.className = 'fa-solid fa-angle-left';
+      }
+    }
+
+    // UI Navigation Handler
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('bg-indigo-600/20', 'text-indigo-300', 'border', 'border-indigo-500/30');
+        el.classList.add('text-slate-400');
+      });
+
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${tabName}`);
+      if (activeNav) {
+        activeNav.classList.add('bg-indigo-600/20', 'text-indigo-300', 'border', 'border-indigo-500/30');
+        activeNav.classList.remove('text-slate-400');
+      }
+
+      const titles = {
+        dashboard: 'Overview Dashboard',
+        'project-status': 'Project & Operations Task Status List',
+        calendar: 'Calendar Schedule & Operational Attendance',
+        personnel: 'Personnel Roster Master List',
+        leave: 'Leave Management & Tracker',
+        jobs: 'Job & Task Operations Master List'
+      };
+      document.getElementById('page-title').textContent = titles[tabName] || 'Operations Center';
+    }
+
+    function toggleMobileNav() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Modal Control Logic
+    function openModal(type, id = null) {
+      populateStaffDropdowns();
+      if (type === 'project') {
+        const form = document.getElementById('form-project');
+        form.reset();
+        document.getElementById('proj-id').value = '';
+        document.getElementById('proj-progress-val').textContent = '0';
+        document.getElementById('modal-project-title').textContent = id ? 'Edit Project Task' : 'Add Project Task';
+        if (id) {
+          const item = projects.find(p => String(p.id) === String(id));
+          if (item) {
+            document.getElementById('proj-id').value = item.id;
+            document.getElementById('proj-code').value = item.code;
+            document.getElementById('proj-title').value = item.title;
+            document.getElementById('proj-category').value = item.category || 'Infrastructure';
+            document.getElementById('proj-assigned').value = item.assignedId;
+            document.getElementById('proj-priority').value = item.priority;
+            document.getElementById('proj-start').value = item.start;
+            document.getElementById('proj-expected').value = item.expected;
+            document.getElementById('proj-completed-date').value = item.completedDate || '';
+            document.getElementById('proj-status').value = item.status;
+            document.getElementById('proj-progress').value = item.progress || 0;
+            document.getElementById('proj-progress-val').textContent = item.progress || 0;
+            document.getElementById('proj-remarks').value = item.remarks || '';
+          }
+        }
+        document.getElementById('modal-project').classList.remove('hidden');
+      } else if (type === 'personnel') {
+        const form = document.getElementById('form-personnel');
+        form.reset();
+        document.getElementById('p-id').value = '';
+        document.getElementById('modal-personnel-title').textContent = id ? 'Edit Personnel' : 'Add Personnel';
+        if (id) {
+          const item = personnel.find(p => String(p.id) === String(id));
+          if (item) {
+            document.getElementById('p-id').value = item.id;
+            document.getElementById('p-staff-id').value = item.staffId;
+            document.getElementById('p-name').value = item.name;
+            document.getElementById('p-role').value = item.role;
+            document.getElementById('p-dept').value = item.dept;
+            document.getElementById('p-type').value = item.type;
+            document.getElementById('p-status').value = item.status;
+            document.getElementById('p-email').value = item.email;
+          }
+        }
+        document.getElementById('modal-personnel').classList.remove('hidden');
+      } else if (type === 'leave') {
+        document.getElementById('form-leave').reset();
+        document.getElementById('modal-leave').classList.remove('hidden');
+      } else if (type === 'job') {
+        const form = document.getElementById('form-job');
+        form.reset();
+        document.getElementById('j-id').value = '';
+        document.getElementById('modal-job-title').textContent = id ? 'Edit Job' : 'Create Operation Job';
+        if (id) {
+          const item = jobs.find(j => String(j.id) === String(id));
+          if (item) {
+            document.getElementById('j-id').value = item.id;
+            document.getElementById('j-code').value = item.code;
+            document.getElementById('j-title').value = item.title;
+            document.getElementById('j-assigned').value = item.assignedId;
+            document.getElementById('j-priority').value = item.priority;
+            document.getElementById('j-start').value = item.start;
+            document.getElementById('j-due').value = item.due;
+            document.getElementById('j-status').value = item.status;
+          }
+        }
+        document.getElementById('modal-job').classList.remove('hidden');
+      }
+    }
+
+    function closeModal(type) {
+      document.getElementById(`modal-${type}`).classList.add('hidden');
+    }
+
+    function populateStaffDropdowns() {
+      const projStaffSelect = document.getElementById('proj-assigned');
+      const leaveStaffSelect = document.getElementById('l-staff-id');
+      const jobStaffSelect = document.getElementById('j-assigned');
+      
+      projStaffSelect.innerHTML = '';
+      leaveStaffSelect.innerHTML = '';
+      jobStaffSelect.innerHTML = '';
+
+      personnel.forEach(p => {
+        const opt = `<option value="${p.id}">${p.name} (${p.staffId})</option>`;
+        projStaffSelect.innerHTML += opt;
+        leaveStaffSelect.innerHTML += opt;
+        jobStaffSelect.innerHTML += opt;
+      });
+    }
+
+    // Save Project Task
+    function saveProject(e) {
+      e.preventDefault();
+      const id = document.getElementById('proj-id').value || Date.now().toString();
+      const newEntry = {
+        id,
+        code: document.getElementById('proj-code').value,
+        title: document.getElementById('proj-title').value,
+        category: document.getElementById('proj-category').value,
+        assignedId: document.getElementById('proj-assigned').value,
+        priority: document.getElementById('proj-priority').value,
+        start: document.getElementById('proj-start').value,
+        expected: document.getElementById('proj-expected').value,
+        completedDate: document.getElementById('proj-completed-date').value,
+        status: document.getElementById('proj-status').value,
+        progress: parseInt(document.getElementById('proj-progress').value) || 0,
+        remarks: document.getElementById('proj-remarks').value
+      };
+
+      const existingIdx = projects.findIndex(p => String(p.id) === String(id));
+      if (existingIdx >= 0) projects[existingIdx] = newEntry;
+      else projects.push(newEntry);
+
+      closeModal('project');
+      persistData();
+    }
+
+    function updateProjectQuickProgress(id, progress) {
+      const proj = projects.find(p => String(p.id) === String(id));
+      if (proj) {
+        proj.progress = parseInt(progress);
+        if (proj.progress === 100 && proj.status !== 'Completed') {
+          proj.status = 'Completed';
+          if (!proj.completedDate) proj.completedDate = new Date().toISOString().split('T')[0];
+        }
+        persistData();
+      }
+    }
+
+    function updateProjectQuickStatus(id, newStatus) {
+      const proj = projects.find(p => String(p.id) === String(id));
+      if (proj) {
+        proj.status = newStatus;
+        if (newStatus === 'Completed') {
+          proj.progress = 100;
+          if (!proj.completedDate) proj.completedDate = new Date().toISOString().split('T')[0];
+        }
+        persistData();
+      }
+    }
+
+    function deleteProject(id) {
+      projects = projects.filter(p => String(p.id) !== String(id));
+      persistData();
+    }
+
+    function exportProjectsToCSV() {
+      if (projects.length === 0) return;
+      let csv = 'Code,Task Name,Category,Assigned Owner,Priority,Start Date,Expected Date,Completed Date,Progress (%),Status,Remarks\n';
+      projects.forEach(p => {
+        const staff = personnel.find(s => String(s.id) === String(p.assignedId));
+        csv += `"${p.code}","${p.title}","${p.category}","${staff ? staff.name : 'Unassigned'}","${p.priority}","${p.start}","${p.expected}","${p.completedDate || ''}","${p.progress}","${p.status}","${p.remarks || ''}"\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `Project_Status_Report_${new Date().toISOString().split('T')[0]}.csv`);
+      a.click();
+    }
+
+    // Save Handlers for other entities
+    function savePersonnel(e) {
+      e.preventDefault();
+      const id = document.getElementById('p-id').value || Date.now().toString();
+      const newEntry = {
+        id,
+        staffId: document.getElementById('p-staff-id').value,
+        name: document.getElementById('p-name').value,
+        role: document.getElementById('p-role').value,
+        dept: document.getElementById('p-dept').value,
+        type: document.getElementById('p-type').value,
+        status: document.getElementById('p-status').value,
+        email: document.getElementById('p-email').value
+      };
+
+      const existingIdx = personnel.findIndex(p => String(p.id) === String(id));
+      if (existingIdx >= 0) personnel[existingIdx] = newEntry;
+      else personnel.push(newEntry);
+
+      closeModal('personnel');
+      persistData();
+    }
+
+    function saveLeave(e) {
+      e.preventDefault();
+      const newEntry = {
+        id: Date.now().toString(),
+        staffId: document.getElementById('l-staff-id').value,
+        type: document.getElementById('l-type').value,
+        days: parseInt(document.getElementById('l-days').value),
+        start: document.getElementById('l-start').value,
+        end: document.getElementById('l-end').value,
+        notes: document.getElementById('l-notes').value,
+        status: 'Pending'
+      };
+
+      leaveRequests.push(newEntry);
+      closeModal('leave');
+      persistData();
+    }
+
+    function saveJob(e) {
+      e.preventDefault();
+      const id = document.getElementById('j-id').value || Date.now().toString();
+      const newEntry = {
+        id,
+        code: document.getElementById('j-code').value,
+        title: document.getElementById('j-title').value,
+        assignedId: document.getElementById('j-assigned').value,
+        priority: document.getElementById('j-priority').value,
+        start: document.getElementById('j-start').value,
+        due: document.getElementById('j-due').value,
+        status: document.getElementById('j-status').value
+      };
+
+      const existingIdx = jobs.findIndex(j => String(j.id) === String(id));
+      if (existingIdx >= 0) jobs[existingIdx] = newEntry;
+      else jobs.push(newEntry);
+
+      closeModal('job');
+      persistData();
+    }
+
+    // Status Modifiers & Deletions
+    function deletePersonnel(id) {
+      personnel = personnel.filter(p => String(p.id) !== String(id));
+      persistData();
+    }
+
+    function updateLeaveStatus(id, newStatus) {
+      const request = leaveRequests.find(l => String(l.id) === String(id));
+      if (request) {
+        request.status = newStatus;
+        if (newStatus === 'Approved') {
+          const staff = personnel.find(p => String(p.id) === String(request.staffId));
+          if (staff) staff.status = 'On Leave';
+        }
+      }
+      persistData();
+    }
+
+    function deleteJob(id) {
+      jobs = jobs.filter(j => String(j.id) !== String(id));
+      persistData();
+    }
+
+    function updateJobStatusQuick(id, newStatus) {
+      const job = jobs.find(j => String(j.id) === String(id));
+      if (job) job.status = newStatus;
+      persistData();
+    }
+
+    // Dynamic Render Functions
+    function renderProjectStatus() {
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Update Badge count
+      const activeProjCount = projects.filter(p => p.status !== 'Completed').length;
+      document.getElementById('badge-active-projects').textContent = activeProjCount;
+
+      // Metric Summary Cards
+      document.getElementById('stat-proj-total').textContent = projects.length;
+      document.getElementById('stat-proj-inprogress').textContent = projects.filter(p => p.status === 'In Progress').length;
+      document.getElementById('stat-proj-completed').textContent = projects.filter(p => p.status === 'Completed').length;
+      
+      const delayedCount = projects.filter(p => p.status === 'Delayed' || (p.status !== 'Completed' && p.expected < todayStr)).length;
+      document.getElementById('stat-proj-delayed').textContent = delayedCount;
+      document.getElementById('stat-proj-review').textContent = projects.filter(p => p.status === 'Under Review').length;
+
+      // Table Render
+      const tbody = document.getElementById('project-table-body');
+      tbody.innerHTML = '';
+
+      const search = document.getElementById('project-search').value.toLowerCase();
+      const statusFilter = document.getElementById('project-status-filter').value;
+      const priorityFilter = document.getElementById('project-priority-filter').value;
+      const categoryFilter = document.getElementById('project-category-filter').value;
+
+      const filtered = projects.filter(p => {
+        const matchesSearch = (p.code || '').toLowerCase().includes(search) || (p.title || '').toLowerCase().includes(search) || (p.remarks && p.remarks.toLowerCase().includes(search));
+        const matchesStatus = statusFilter === 'ALL' || p.status === statusFilter;
+        const matchesPriority = priorityFilter === 'ALL' || p.priority === priorityFilter;
+        const matchesCategory = categoryFilter === 'ALL' || p.category === categoryFilter;
+        return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-xs text-slate-500">No project tasks match the selected criteria.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(p => {
+        const staff = personnel.find(s => String(s.id) === String(p.assignedId));
+        const isOverdue = p.status !== 'Completed' && p.expected < todayStr;
+
+        // Badge styling
+        const priorityBadge = p.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30 font-bold' :
+                             p.priority === 'High' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                             p.priority === 'Medium' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' :
+                             'bg-slate-500/20 text-slate-400 border-slate-500/30';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-[11px] font-semibold text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-900">${p.code}</span>
+                ${isOverdue ? '<span class="px-1.5 py-0.5 text-[9px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded uppercase animate-pulse">Overdue</span>' : ''}
+              </div>
+              <div class="text-slate-200 font-medium text-xs mt-1">${p.title}</div>
+            </td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded text-[10px]">${p.category || 'General'}</span>
+            </td>
+            <td class="py-3 px-4 text-slate-300 font-medium">${staff ? staff.name : 'Unassigned'}</td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded-full border text-[10px] font-medium ${priorityBadge}">${p.priority}</span>
+            </td>
+            <td class="py-3 px-4 font-mono text-[11px]">
+              <div class="text-slate-400">Start: ${p.start}</div>
+              <div class="${isOverdue ? 'text-rose-400 font-semibold' : 'text-slate-300'}">Target: ${p.expected}</div>
+              ${p.completedDate ? `<div class="text-emerald-400 font-medium">Done: ${p.completedDate}</div>` : ''}
+            </td>
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2">
+                <div class="flex-1 bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-indigo-500 h-full transition-all duration-300" style="width: ${p.progress || 0}%"></div>
+                </div>
+                <span class="font-mono text-[11px] text-slate-300 shrink-0">${p.progress || 0}%</span>
+              </div>
+              <input type="range" min="0" max="100" value="${p.progress || 0}" onchange="updateProjectQuickProgress('${p.id}', this.value)" class="w-full h-1 mt-1 bg-slate-800 accent-indigo-500 cursor-pointer">
+            </td>
+            <td class="py-3 px-4">
+              <select onchange="updateProjectQuickStatus('${p.id}', this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-2 py-1 text-[11px] focus:outline-none">
+                <option value="Not Started" ${p.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                <option value="In Progress" ${p.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="On Hold" ${p.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
+                <option value="Under Review" ${p.status === 'Under Review' ? 'selected' : ''}>Under Review</option>
+                <option value="Completed" ${p.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                <option value="Delayed" ${p.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
+              </select>
+            </td>
+            <td class="py-3 px-4 text-slate-400 max-w-xs truncate" title="${p.remarks || ''}">${p.remarks || '-'}</td>
+            <td class="py-3 px-4 text-right space-x-2">
+              <button onclick="openModal('project', '${p.id}')" class="p-1.5 text-slate-400 hover:text-indigo-400 transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="deleteProject('${p.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderDashboard() {
+      // Metric Counters
+      document.getElementById('stat-total-staff').textContent = personnel.length;
+      document.getElementById('stat-active-staff').textContent = personnel.filter(p => p.status === 'Active').length;
+      document.getElementById('stat-on-leave').textContent = personnel.filter(p => p.status === 'On Leave').length;
+      document.getElementById('stat-pending-leave').textContent = leaveRequests.filter(l => l.status === 'Pending').length;
+
+      const activeJobsCount = jobs.filter(j => j.status !== 'Completed').length;
+      const inProgressCount = jobs.filter(j => j.status === 'In Progress').length;
+      document.getElementById('stat-active-jobs').textContent = activeJobsCount;
+      document.getElementById('stat-in-progress-jobs').textContent = inProgressCount;
+
+      const completedJobs = jobs.filter(j => j.status === 'Completed').length;
+      const rate = jobs.length > 0 ? Math.round((completedJobs / jobs.length) * 100) : 0;
+      document.getElementById('stat-completion-rate').textContent = `${rate}%`;
+      document.getElementById('stat-high-priority').textContent = jobs.filter(j => j.priority === 'High' && j.status !== 'Completed').length;
+
+      // Active Operations Dashboard List
+      const dashList = document.getElementById('dash-active-jobs-list');
+      dashList.innerHTML = '';
+      const activeOps = jobs.filter(j => j.status !== 'Completed').slice(0, 4);
+
+      if (activeOps.length === 0) {
+        dashList.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">No active operational jobs.</div>`;
+      } else {
+        activeOps.forEach(job => {
+          const staff = personnel.find(p => String(p.id) === String(job.assignedId));
+          const priorityBadge = job.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : job.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+
+          dashList.innerHTML += `
+            <div class="flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">${job.code}</span>
+                <div>
+                  <h4 class="text-xs font-semibold text-slate-200">${job.title}</h4>
+                  <p class="text-[11px] text-slate-400">Assigned: ${staff ? staff.name : 'Unassigned'}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] px-2 py-0.5 rounded-full border ${priorityBadge}">${job.priority}</span>
+                <span class="text-[11px] font-medium text-slate-400">${job.status}</span>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Department Distribution List
+      const deptList = document.getElementById('dash-dept-distribution');
+      deptList.innerHTML = '';
+      const depts = ['Operations', 'Engineering', 'Logistics', 'Quality Assurance'];
+      depts.forEach(d => {
+        const count = personnel.filter(p => p.dept === d).length;
+        const pct = personnel.length > 0 ? Math.round((count / personnel.length) * 100) : 0;
+        deptList.innerHTML += `
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300 font-medium">${d}</span>
+              <span class="text-slate-400">${count} staff (${pct}%)</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-indigo-500 h-full" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Calendar Render & Helpers
+    function navigateMonth(offset) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + offset);
+      renderCalendar();
+    }
+
+    function resetCalendarToToday() {
+      currentCalDate = new Date();
+      renderCalendar();
+    }
+
+    function toggleCalendarStatus(statusType) {
+      calendarStatusFilters[statusType] = !calendarStatusFilters[statusType];
+      
+      const btn = document.getElementById(`toggle-${statusType}`);
+      const styles = {
+        office: { active: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', inactive: 'bg-slate-900/50 text-slate-500 border-slate-800 opacity-60' },
+        outstation: { active: 'bg-sky-500/20 text-sky-300 border-sky-500/40', inactive: 'bg-slate-900/50 text-slate-500 border-slate-800 opacity-60' },
+        leave: { active: 'bg-rose-500/20 text-rose-300 border-rose-500/40', inactive: 'bg-slate-900/50 text-slate-500 border-slate-800 opacity-60' }
+      };
+
+      if (calendarStatusFilters[statusType]) {
+        btn.className = `flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md transition-all font-medium ${styles[statusType].active}`;
+      } else {
+        btn.className = `flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md transition-all font-medium ${styles[statusType].inactive}`;
+      }
+
+      renderCalendar();
+    }
+
+    function getStaffStatusForDate(staffId, dateStr) {
+      const onLeave = leaveRequests.find(l => String(l.staffId) === String(staffId) && l.status === 'Approved' && dateStr >= l.start && dateStr <= l.end);
+      if (onLeave) {
+        return { status: 'On Leave', type: 'leave', label: `On Leave (${onLeave.type})`, badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40', detail: onLeave.notes || 'Approved Leave' };
+      }
+
+      const activeJob = jobs.find(j => String(j.assignedId) === String(staffId) && j.status === 'In Progress' && dateStr >= j.start && dateStr <= j.due);
+      if (activeJob) {
+        return { status: 'Outstation', type: 'outstation', label: `Outstation (${activeJob.code})`, badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40', detail: activeJob.title };
+      }
+
+      return { status: 'At Office', type: 'office', label: 'At Office', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', detail: 'Normal Duty' };
+    }
+
+    function renderCalendar() {
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+
+      document.getElementById('calendar-month-label').textContent = `${monthNames[month]} ${year}`;
+
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      const selectedDept = document.getElementById('calendar-dept-filter').value;
+      const filteredStaff = personnel.filter(p => selectedDept === 'ALL' || p.dept === selectedDept);
+
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      for (let i = 0; i < firstDayIndex; i++) {
+        grid.innerHTML += `<div class="bg-slate-900/30 border border-slate-800/40 rounded-lg h-32 p-1.5 opacity-40"></div>`;
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const formattedDay = String(day).padStart(2, '0');
+        const formattedMonth = String(month + 1).padStart(2, '0');
+        const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
+
+        const isToday = dateStr === todayStr;
+
+        let badgesHtml = '';
+        const visibleStaffForDay = [];
+
+        filteredStaff.forEach(staff => {
+          const statusObj = getStaffStatusForDate(staff.id, dateStr);
+          if (calendarStatusFilters[statusObj.type]) {
+            visibleStaffForDay.push({ staff, statusObj });
+          }
         });
 
-        function fetchFromCloud() {
-            updateSyncStatus('<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Loading...', 'bg-slate-800 text-slate-400');
-            fetch(`${API_URL}?action=read`)
-                .then(res => res.json())
-                .then(data => {
-                    db.personnel = data.personnel || [];
-                    db.leaves = data.leaves || [];
-                    db.jobs = data.jobs || [];
-                    db.projects = data.projects || [];
-                    renderAll();
-                    updateSyncStatus('<i class="fa-solid fa-circle-check mr-1"></i> Synced', 'bg-emerald-900/50 text-emerald-300');
-                })
-                .catch(err => {
-                    console.error(err);
-                    updateSyncStatus('<i class="fa-solid fa-circle-exclamation mr-1"></i> Sync Error', 'bg-rose-900/50 text-rose-300');
-                });
+        visibleStaffForDay.slice(0, 3).forEach(({ staff, statusObj }) => {
+          badgesHtml += `
+            <div class="text-[10px] truncate px-1.5 py-0.5 rounded border ${statusObj.badgeClass} mb-1 flex items-center justify-between">
+              <span class="truncate">${staff.name.split(' ')[0]}</span>
+              <span class="font-semibold text-[9px] uppercase ml-1 shrink-0">${statusObj.status === 'On Leave' ? 'LV' : statusObj.status === 'Outstation' ? 'OUT' : 'OFF'}</span>
+            </div>
+          `;
+        });
+
+        if (visibleStaffForDay.length > 3) {
+          badgesHtml += `<div class="text-[10px] text-slate-400 font-medium px-1 text-right">+${visibleStaffForDay.length - 3} more</div>`;
         }
 
-        function saveToCloud() {
-            updateSyncStatus('<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Saving...', 'bg-amber-900/50 text-amber-300');
-            fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "writeAll", data: db })
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === "success") {
-                    updateSyncStatus('<i class="fa-solid fa-circle-check mr-1"></i> Synced', 'bg-emerald-900/50 text-emerald-300');
-                } else {
-                    updateSyncStatus('<i class="fa-solid fa-circle-exclamation mr-1"></i> Error', 'bg-rose-900/50 text-rose-300');
-                }
-            })
-            .catch(() => {
-                updateSyncStatus('<i class="fa-solid fa-circle-exclamation mr-1"></i> Error', 'bg-rose-900/50 text-rose-300');
-            });
-        }
+        grid.innerHTML += `
+          <div onclick="openDayDetailModal('${dateStr}')" class="bg-slate-900/80 border ${isToday ? 'border-indigo-500 bg-indigo-950/20' : 'border-slate-800'} hover:border-slate-600 rounded-lg h-32 p-2 cursor-pointer transition-all flex flex-col justify-between group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold ${isToday ? 'text-indigo-400 bg-indigo-500/20 px-1.5 py-0.5 rounded-full' : 'text-slate-300'}">${day}</span>
+              ${isToday ? '<span class="text-[9px] uppercase font-bold text-indigo-400">Today</span>' : ''}
+            </div>
+            <div class="flex-1 overflow-hidden">
+              ${badgesHtml}
+            </div>
+          </div>
+        `;
+      }
+    }
 
-        function updateSyncStatus(html, classes) {
-            const statusEl = document.getElementById('sync-status');
-            statusEl.innerHTML = html;
-            statusEl.className = `text-xs text-center py-1 px-2 rounded-lg font-medium ${classes}`;
-        }
+    function openDayDetailModal(dateStr) {
+      const selectedDept = document.getElementById('calendar-dept-filter').value;
+      const filteredStaff = personnel.filter(p => selectedDept === 'ALL' || p.dept === selectedDept);
 
-        function renderAll() {
-            document.getElementById('dash-personnel-count').textContent = db.personnel.length;
-            document.getElementById('dash-projects-count').textContent = db.projects.length;
-            document.getElementById('dash-leave-count').textContent = db.leaves.length;
-            document.getElementById('dash-jobs-count').textContent = db.jobs.length;
+      document.getElementById('day-detail-title').textContent = `Attendance Schedule: ${dateStr}`;
+      
+      const visibleStaff = filteredStaff.filter(staff => {
+        const info = getStaffStatusForDate(staff.id, dateStr);
+        return calendarStatusFilters[info.type];
+      });
 
-            const tbody = document.getElementById('personnel-table-body');
-            if (db.personnel.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No personnel records found.</td></tr>`;
-            } else {
-                tbody.innerHTML = db.personnel.map(p => `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="p-4 font-semibold text-white">${p.Name || ''}</td>
-                        <td class="p-4">${p.Role || ''}</td>
-                        <td class="p-4">${p.Department || ''}</td>
-                        <td class="p-4"><span class="px-2 py-1 rounded text-xs bg-slate-700">${p.Status || 'Active'}</span></td>
-                    </tr>
-                `).join('');
-            }
-        }
+      document.getElementById('day-detail-subtitle').textContent = `Showing ${visibleStaff.length} matching personnel`;
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('bg-indigo-600/20', 'text-indigo-400');
-            });
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            document.querySelector(`[data-tab="${tabId}"]`).classList.add('bg-indigo-600/20', 'text-indigo-400');
-        }
+      const listContainer = document.getElementById('day-detail-list');
+      listContainer.innerHTML = '';
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('w-64');
-            sidebar.classList.toggle('w-16');
-            document.querySelectorAll('.sidebar-label').forEach(el => el.classList.toggle('hidden'));
-        }
-    </script>
+      if (visibleStaff.length === 0) {
+        listContainer.innerHTML = `<div class="text-center py-6 text-xs text-slate-500">No personnel match current status filters for this date.</div>`;
+      } else {
+        visibleStaff.forEach(staff => {
+          const info = getStaffStatusForDate(staff.id, dateStr);
+          listContainer.innerHTML += `
+            <div class="flex items-center justify-between p-3 rounded-lg bg-slate-900/80 border border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-indigo-400">
+                  ${staff.name.charAt(0)}
+                </div>
+                <div>
+                  <h4 class="text-xs font-semibold text-slate-100">${staff.name} <span class="text-[10px] text-slate-400 font-normal">(${staff.dept})</span></h4>
+                  <p class="text-[11px] text-slate-400">${info.detail}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full border text-[11px] font-medium ${info.badgeClass}">${info.label}</span>
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById('modal-day-detail').classList.remove('hidden');
+    }
+
+    function renderPersonnel() {
+      const tbody = document.getElementById('personnel-table-body');
+      tbody.innerHTML = '';
+      const search = document.getElementById('personnel-search').value.toLowerCase();
+      const dept = document.getElementById('personnel-dept-filter').value;
+
+      const filtered = personnel.filter(p => {
+        const matchesSearch = (p.name || '').toLowerCase().includes(search) || (p.staffId || '').toLowerCase().includes(search) || (p.role || '').toLowerCase().includes(search);
+        const matchesDept = dept === 'ALL' || p.dept === dept;
+        return matchesSearch && matchesDept;
+      });
+
+      filtered.forEach(p => {
+        const statusBadge = p.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : p.status === 'On Leave' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-100">${p.name}</div>
+              <div class="text-[11px] font-mono text-slate-400">${p.staffId}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="text-slate-200">${p.role}</div>
+              <div class="text-[11px] text-indigo-400">${p.dept}</div>
+            </td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">${p.type}</span>
+            </td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-1 rounded-full border text-[11px] font-medium inline-flex items-center gap-1.5 ${statusBadge}">
+                <span class="w-1.5 h-1.5 rounded-full ${p.status === 'Active' ? 'bg-emerald-400' : p.status === 'On Leave' ? 'bg-amber-400' : 'bg-slate-400'}"></span>
+                ${p.status}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-400">${p.email}</td>
+            <td class="py-3 px-4 text-right space-x-2">
+              <button onclick="openModal('personnel', '${p.id}')" class="p-1.5 text-slate-400 hover:text-indigo-400 transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="deletePersonnel('${p.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderLeave() {
+      const tbody = document.getElementById('leave-table-body');
+      tbody.innerHTML = '';
+      const filter = document.getElementById('leave-status-filter').value;
+
+      const filtered = leaveRequests.filter(l => filter === 'ALL' || l.status === filter);
+
+      filtered.forEach(l => {
+        const staff = personnel.find(p => String(p.id) === String(l.staffId));
+        const statusBadge = l.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : l.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-3 px-4 font-medium text-slate-200">${staff ? staff.name : 'Unknown Staff'}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">${l.type}</span></td>
+            <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">${l.start} &rarr; ${l.end}</td>
+            <td class="py-3 px-4 text-slate-300 font-medium">${l.days} Day(s)</td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-1 rounded-full border text-[11px] font-medium ${statusBadge}">${l.status}</span>
+            </td>
+            <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${l.notes || '-'}</td>
+            <td class="py-3 px-4 text-right space-x-1">
+              ${l.status === 'Pending' ? `
+                <button onclick="updateLeaveStatus('${l.id}', 'Approved')" class="px-2.5 py-1 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white rounded text-[11px] transition-colors">Approve</button>
+                <button onclick="updateLeaveStatus('${l.id}', 'Rejected')" class="px-2.5 py-1 bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600 hover:text-white rounded text-[11px] transition-colors">Reject</button>
+              ` : `<span class="text-slate-500 text-[11px]">Processed</span>`}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderJobs() {
+      const tbody = document.getElementById('jobs-table-body');
+      tbody.innerHTML = '';
+      const search = document.getElementById('job-search').value.toLowerCase();
+      const statusFilter = document.getElementById('job-status-filter').value;
+      const priorityFilter = document.getElementById('job-priority-filter').value;
+
+      const filtered = jobs.filter(j => {
+        const matchesSearch = (j.code || '').toLowerCase().includes(search) || (j.title || '').toLowerCase().includes(search);
+        const matchesStatus = statusFilter === 'ALL' || j.status === statusFilter;
+        const matchesPriority = priorityFilter === 'ALL' || j.priority === priorityFilter;
+        return matchesSearch && matchesStatus && matchesPriority;
+      });
+
+      filtered.forEach(j => {
+        const staff = personnel.find(p => String(p.id) === String(j.assignedId));
+        const priorityBadge = j.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : j.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-3 px-4">
+              <span class="text-xs font-mono font-semibold text-indigo-400">${j.code}</span>
+              <div class="text-slate-200 font-medium">${j.title}</div>
+            </td>
+            <td class="py-3 px-4 text-slate-300">${staff ? staff.name : 'Unassigned'}</td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-1 rounded-full border text-[11px] font-medium ${priorityBadge}">${j.priority}</span>
+            </td>
+            <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">${j.start} &rarr; ${j.due}</td>
+            <td class="py-3 px-4">
+              <select onchange="updateJobStatusQuick('${j.id}', this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-2 py-1 text-[11px] focus:outline-none">
+                <option value="Not Started" ${j.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                <option value="In Progress" ${j.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Pending Review" ${j.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
+                <option value="Completed" ${j.status === 'Completed' ? 'selected' : ''}>Completed</option>
+              </select>
+            </td>
+            <td class="py-3 px-4 text-right space-x-2">
+              <button onclick="openModal('job', '${j.id}')" class="p-1.5 text-slate-400 hover:text-indigo-400 transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="deleteJob('${j.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderProjectStatus();
+      renderCalendar();
+      renderPersonnel();
+      renderLeave();
+      renderJobs();
+    }
+  </script>
 </body>
 </html>
